@@ -2,6 +2,7 @@ import 'package:facebook_auth/core/enums/load_status.dart';
 import 'package:facebook_auth/core/errors/error_handler.dart';
 import 'package:facebook_auth/core/services/logger/logger_service.dart';
 import 'package:flutter/material.dart';
+import 'dart:async';
 import '../../domain/entities/user_entity.dart';
 import '../../domain/usecases/facebook_login_usecase.dart';
 import '../../domain/usecases/logout_usecase.dart';
@@ -82,7 +83,10 @@ class AuthProvider extends ChangeNotifier {
     _setStatus(LoadStatus.loading);
     _clearError();
     try {
-      final user = await action();
+      final user = await action().timeout(
+        const Duration(seconds: 30),
+        onTimeout: () => throw TimeoutException('Authentication request timed out. Please try again.'),
+      );
       _handleSuccess(user, context);
     } catch (error, stackTrace) {
       _handleError('$context failed', error, stackTrace);

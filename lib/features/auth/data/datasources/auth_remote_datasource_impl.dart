@@ -47,24 +47,38 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
   @override
   Future<UserModel> loginWithFacebook() async {
-    return _runAuthAction(() async {
+    try {
+      LoggerService.info('Facebook login: Starting login flow');
       final result = await facebookAuth.login(
         permissions: ['email', 'public_profile'],
       );
+      LoggerService.info('Facebook login: Login result status = ${result.status}');
+      
       final token = result.accessToken?.tokenString;
-      if (token == null) {
-        throw Exception('Facebook login was cancelled.');
+      if (token == null || token.isEmpty) {
+        final status = result.status.toString();
+        throw Exception('Facebook authentication failed (status: $status). Please try again.');
       }
+      
+      LoggerService.info('Facebook login: Got access token, signing in with Firebase');
       final credential = FacebookAuthProvider.credential(token);
       final userCredential = await firebaseAuth.signInWithCredential(credential);
+      LoggerService.success('Facebook login: Firebase sign in successful');
+      
+      LoggerService.info('Facebook login: Fetching profile data');
       final profile = await _fetchFacebookProfile();
+      LoggerService.success('Facebook login: Profile fetched successfully');
+      
       return _userFromCredential(
         userCredential,
         nameOverride: profile.name,
         emailOverride: profile.email,
         photoUrlOverride: profile.photoUrl,
       );
-    }, context: 'Facebook login');
+    } catch (error, stackTrace) {
+      ErrorHandler.logError('Facebook login', error, stackTrace);
+      throw Exception('Facebook login failed. Please check your Facebook app configuration on Android or try again.');
+    }
   }
 
   @override
@@ -139,10 +153,17 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   }
 
   Future<_FacebookProfile> _fetchFacebookProfile() async {
-    final data = await facebookAuth.getUserData(
-      fields: 'name,email,picture.width(200)',
-    );
-    return _FacebookProfile.fromMap(data);
+    try {
+      LoggerService.info('Fetching Facebook profile data');
+      final data = await facebookAuth.getUserData(
+        fields: 'name,email,picture.width(200)',
+      );
+      LoggerService.info('Facebook profile data: $data');
+      return _FacebookProfile.fromMap(data);
+    } catch (error) {
+      LoggerService.warning('Failed to fetch Facebook profile, proceeding without profile data');
+      return const _FacebookProfile();
+    }
   }
 }
 

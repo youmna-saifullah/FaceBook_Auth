@@ -27,6 +27,15 @@ class ErrorHandler {
       return 'No internet connection.';
     }
 
+    // For generic exceptions, try to extract message
+    if (error is Exception) {
+      final message = error.toString();
+      if (message.contains('Exception:')) {
+        return message.replaceAll('Exception: ', '').trim();
+      }
+      return message.isEmpty ? 'Something went wrong. Please try again.' : message;
+    }
+
     return 'Something went wrong. Please try again.';
   }
 

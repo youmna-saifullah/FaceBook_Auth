@@ -21,7 +21,7 @@ class AppRouter {
         path: RouteName.signin,
         name: 'signin',
         pageBuilder: (context, state) => RouterTransitions.slideRightTransition(
-          child: const SignInScreen(),
+          child:  SignInScreen(),
           name: RouteName.signin,
         ),
       ),
@@ -29,7 +29,7 @@ class AppRouter {
         path: RouteName.signup,
         name: 'signup',
         pageBuilder: (context, state) => RouterTransitions.slideLeftTransition(
-          child: const SignUpScreen(),
+          child: SignUpScreen(),
           name: RouteName.signup,
         ),
       ),

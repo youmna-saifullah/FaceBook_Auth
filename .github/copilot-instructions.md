@@ -1,4 +1,4 @@
-# AI Rules for My Flutter Project
+# AI Rules for My Flutter App
 
 ## 🔗 Model & IDE Integration
 - This project will be connected with:

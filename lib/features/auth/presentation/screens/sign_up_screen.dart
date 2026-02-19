@@ -6,84 +6,35 @@ import '../../../../core/router/router_name.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/auth_action_button.dart';
+import '../widgets/auth_form_layout.dart';
 
-class SignUpScreen extends StatefulWidget {
-  const SignUpScreen({super.key});
+class SignUpScreen extends StatelessWidget {
+  SignUpScreen({super.key});
 
-  @override
-  State<SignUpScreen> createState() => _SignUpScreenState();
-}
-
-class _SignUpScreenState extends State<SignUpScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
-  final _confirmController = TextEditingController();
-  bool _primaryPressed = false;
-  LoadStatus _lastStatus = LoadStatus.idle;
-
-  @override
-  void dispose() {
-    _nameController.dispose();
-    _emailController.dispose();
-    _passwordController.dispose();
-    _confirmController.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final provider = context.watch<AuthProvider>();
-            _handleState(context, provider);
-            return _buildContent(context, constraints, provider);
-          },
-        ),
-      ),
-    );
+    final provider = context.watch<AuthProvider>();
+    _handleState(context, provider);
+    return AuthFormLayout(child: _buildForm(context, provider));
   }
 
-  Widget _buildContent(
-    BuildContext context,
-    BoxConstraints constraints,
-    AuthProvider provider,
-  ) {
-    final horizontalPadding = constraints.maxWidth * 0.08;
-    final verticalGap = constraints.maxHeight * 0.02;
-    return SingleChildScrollView(
-      padding: EdgeInsets.symmetric(
-        horizontal: horizontalPadding,
-        vertical: verticalGap * 2,
-      ),
-      child: ConstrainedBox(
-        constraints: BoxConstraints(maxWidth: constraints.maxWidth * 0.85),
-        child: _buildForm(context, verticalGap, provider),
-      ),
-    );
-  }
-
-  Widget _buildForm(
-    BuildContext context,
-    double verticalGap,
-    AuthProvider provider,
-  ) {
+  Widget _buildForm(BuildContext context, AuthProvider provider) {
+    final verticalGap = MediaQuery.of(context).size.height * 0.02;
     return Form(
       key: _formKey,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _buildHeader(context, verticalGap),
-          _buildNameField(),
+          _buildNameField(context),
           SizedBox(height: verticalGap),
-          _buildEmailField(),
+          _buildEmailField(context),
           SizedBox(height: verticalGap),
-          _buildPasswordField(),
+          _buildPasswordField(context),
           SizedBox(height: verticalGap),
-          _buildConfirmField(),
+          _buildConfirmField(context),
           SizedBox(height: verticalGap * 1.5),
           _buildPrimaryButton(provider),
           SizedBox(height: verticalGap),
@@ -94,61 +45,62 @@ class _SignUpScreenState extends State<SignUpScreen> {
   }
 
   Widget _buildHeader(BuildContext context, double verticalGap) {
-    final style = Theme.of(context).textTheme.headlineSmall;
     return Padding(
       padding: EdgeInsets.only(bottom: verticalGap * 2),
       child: Text(
         'Create Account',
-        style: style,
+        style: Theme.of(context).textTheme.headlineSmall,
       ),
     );
   }
 
-  Widget _buildNameField() {
+  Widget _buildNameField(BuildContext context) {
     return TextFormField(
-      controller: _nameController,
       decoration: const InputDecoration(labelText: 'Name'),
-      validator: (value) => _requiredValidator(value, 'Name'),
+      onChanged: context.read<AuthProvider>().setSignUpName,
+      validator: (value) =>
+          context.read<AuthProvider>().validateRequired(value, 'Name'),
     );
   }
 
-  Widget _buildEmailField() {
+  Widget _buildEmailField(BuildContext context) {
     return TextFormField(
-      controller: _emailController,
       keyboardType: TextInputType.emailAddress,
       decoration: const InputDecoration(labelText: 'Email'),
-      validator: (value) => _requiredValidator(value, 'Email'),
+      onChanged: context.read<AuthProvider>().setSignUpEmail,
+      validator: (value) =>
+          context.read<AuthProvider>().validateRequired(value, 'Email'),
     );
   }
 
-  Widget _buildPasswordField() {
+  Widget _buildPasswordField(BuildContext context) {
     return TextFormField(
-      controller: _passwordController,
       obscureText: true,
       decoration: const InputDecoration(labelText: 'Password'),
-      validator: (value) => _requiredValidator(value, 'Password'),
+      onChanged: context.read<AuthProvider>().setSignUpPassword,
+      validator: (value) =>
+          context.read<AuthProvider>().validateRequired(value, 'Password'),
     );
   }
 
-  Widget _buildConfirmField() {
+  Widget _buildConfirmField(BuildContext context) {
     return TextFormField(
-      controller: _confirmController,
       obscureText: true,
       decoration: const InputDecoration(labelText: 'Confirm Password'),
-      validator: _confirmValidator,
+      validator: context.read<AuthProvider>().validateSignUpConfirmPassword,
     );
   }
 
   Widget _buildPrimaryButton(AuthProvider provider) {
-    final isLoading = provider.status == LoadStatus.loading;
-    final color = provider.shouldAnimateSuccess ? AppColors.secondary : AppColors.primary;
     return AuthActionButton(
       label: 'Sign Up',
-      isLoading: isLoading,
-      isPressed: _primaryPressed,
-      color: color,
-      onPressed: isLoading ? null : () => _onSignUp(provider),
-      onPressState: (value) => setState(() => _primaryPressed = value),
+      isLoading: provider.status == LoadStatus.loading,
+      color: provider.shouldAnimateSuccess
+          ? AppColors.secondary
+          : AppColors.primary,
+      onPressed: provider.status == LoadStatus.loading
+          ? null
+          : () => provider.submitSignUpForm(_formKey),
     );
   }
 
@@ -159,59 +111,31 @@ class _SignUpScreenState extends State<SignUpScreen> {
     );
   }
 
-  String? _requiredValidator(String? value, String label) {
-    if (value == null || value.trim().isEmpty) {
-      return '$label is required';
-    }
-    return null;
-  }
-
-  String? _confirmValidator(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Confirm password is required';
-    }
-    if (value != _passwordController.text) {
-      return 'Passwords do not match';
-    }
-    return null;
-  }
-
-  Future<void> _onSignUp(AuthProvider provider) async {
-    final formState = _formKey.currentState;
-    if (formState == null || !formState.validate()) {
-      return;
-    }
-    await provider.signUp(
-      name: _nameController.text.trim(),
-      email: _emailController.text.trim(),
-      password: _passwordController.text.trim(),
-    );
-  }
-
   void _handleState(BuildContext context, AuthProvider provider) {
-    if (_lastStatus == provider.status) {
-      return;
-    }
-    _lastStatus = provider.status;
-    if (provider.status == LoadStatus.success && provider.user != null) {
+    if (provider.status == LoadStatus.success &&
+        provider.user != null &&
+        provider.shouldAnimateSuccess) {
       _postFrame(() {
         _showSnack(context, 'Successfully Registered');
         provider.consumeSuccessAnimation();
         context.go(RouteName.home);
       });
     }
-    if (provider.status == LoadStatus.error && provider.errorMessage != null) {
+    if (provider.status == LoadStatus.error) {
       final message = provider.errorMessage;
       if (message != null) {
-        _postFrame(() => _showSnack(context, message));
+        _postFrame(() {
+          _showSnack(context, message);
+          provider.consumeError();
+        });
       }
     }
   }
 
   void _showSnack(BuildContext context, String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   void _postFrame(VoidCallback action) {

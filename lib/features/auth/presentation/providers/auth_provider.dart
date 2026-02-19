@@ -19,6 +19,11 @@ class AuthProvider extends ChangeNotifier {
   UserEntity? _user;
   String? _errorMessage;
   bool _successAnimation = false;
+  String _signInEmail = '';
+  String _signInPassword = '';
+  String _signUpName = '';
+  String _signUpEmail = '';
+  String _signUpPassword = '';
 
   AuthProvider({
     required this.signInUseCase,
@@ -35,6 +40,66 @@ class AuthProvider extends ChangeNotifier {
 
   void consumeSuccessAnimation() {
     _successAnimation = false;
+  }
+
+  void consumeError() {
+    _errorMessage = null;
+  }
+
+  void setSignUpName(String value) {
+    _signUpName = value.trim();
+  }
+
+  void setSignInEmail(String value) {
+    _signInEmail = value.trim();
+  }
+
+  void setSignInPassword(String value) {
+    _signInPassword = value.trim();
+  }
+
+  String? validateRequired(String? value, String label) {
+    if (value == null || value.trim().isEmpty) {
+      return '$label is required';
+    }
+    return null;
+  }
+
+  Future<void> submitSignInForm(GlobalKey<FormState> formKey) async {
+    if (!(formKey.currentState?.validate() ?? false)) {
+      return;
+    }
+    await signIn(email: _signInEmail, password: _signInPassword);
+  }
+
+  void setSignUpEmail(String value) {
+    _signUpEmail = value.trim();
+  }
+
+  void setSignUpPassword(String value) {
+    _signUpPassword = value.trim();
+  }
+
+  String? validateSignUpConfirmPassword(String? value) {
+    final confirm = value?.trim() ?? '';
+    if (confirm.isEmpty) {
+      return 'Confirm password is required';
+    }
+    if (confirm != _signUpPassword) {
+      return 'Passwords do not match';
+    }
+    return null;
+  }
+
+  Future<void> submitSignUpForm(GlobalKey<FormState> formKey) async {
+    if (!(formKey.currentState?.validate() ?? false)) {
+      return;
+    }
+    await signUp(
+      name: _signUpName,
+      email: _signUpEmail,
+      password: _signUpPassword,
+    );
   }
 
   Future<void> signIn({
@@ -63,12 +128,12 @@ class AuthProvider extends ChangeNotifier {
   }
 
   Future<void> logout() async {
-    _setStatus(LoadStatus.loading);
+    _status = LoadStatus.loading;
     try {
       await logoutUseCase();
       _user = null;
       _successAnimation = false;
-      _setStatus(LoadStatus.success);
+      _status = LoadStatus.success;
     } catch (error, stackTrace) {
       _handleError('Logout failed', error, stackTrace);
     } finally {
@@ -80,14 +145,10 @@ class AuthProvider extends ChangeNotifier {
     Future<UserEntity> Function() action,
     String context,
   ) async {
-    _setStatus(LoadStatus.loading);
-    _clearError();
+    _status = LoadStatus.loading;
+    _errorMessage = null;
     try {
-      final user = await action().timeout(
-        const Duration(seconds: 30),
-        onTimeout: () => throw TimeoutException('Authentication request timed out. Please try again.'),
-      );
-      _handleSuccess(user, context);
+      _handleSuccess(await action(), context);
     } catch (error, stackTrace) {
       _handleError('$context failed', error, stackTrace);
     } finally {
@@ -99,21 +160,13 @@ class AuthProvider extends ChangeNotifier {
     LoggerService.success('$context successful');
     _user = user;
     _successAnimation = true;
-    _setStatus(LoadStatus.success);
+    _status = LoadStatus.success;
   }
 
   void _handleError(String context, Object error, StackTrace stackTrace) {
     ErrorHandler.logError(context, error, stackTrace);
     _errorMessage = ErrorHandler.getMessage(error);
     _successAnimation = false;
-    _setStatus(LoadStatus.error);
-  }
-
-  void _setStatus(LoadStatus value) {
-    _status = value;
-  }
-
-  void _clearError() {
-    _errorMessage = null;
+    _status = LoadStatus.error;
   }
 }

@@ -17,13 +17,10 @@ class AuthLocalDataSourceImpl implements AuthLocalDataSource {
   Future<void> saveUser(UserModel user) async {
     try {
       LoggerService.info('Saving user locally: ${user.email}');
-
-      final userJson = jsonEncode(user.toJson());
       await secureStorage.write(
         key: _userKey,
-        value: userJson,
+        value: jsonEncode(user.toJson()),
       );
-
       LoggerService.success('User saved locally');
     } catch (e) {
       ErrorHandler.logError('Error saving user locally', e);
@@ -42,9 +39,7 @@ class AuthLocalDataSourceImpl implements AuthLocalDataSource {
         LoggerService.debug('No cached user found');
         return null;
       }
-
-      final userMap = jsonDecode(userJson) as Map<String, dynamic>;
-      final user = UserModel.fromJson(userMap);
+      final user = UserModel.fromJson(jsonDecode(userJson) as Map<String, dynamic>);
 
       LoggerService.success('Cached user retrieved: ${user.email}');
       return user;

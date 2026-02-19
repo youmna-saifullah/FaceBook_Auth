@@ -1,35 +1,38 @@
 import 'package:flutter/material.dart';
 
-class AuthActionButton extends StatelessWidget {
+class AuthActionButton extends StatefulWidget {
   final String label;
   final bool isLoading;
-  final bool isPressed;
   final bool isOutlined;
   final Color color;
   final VoidCallback? onPressed;
-  final ValueChanged<bool> onPressState;
 
   const AuthActionButton({
     super.key,
     required this.label,
     required this.isLoading,
-    required this.isPressed,
     required this.color,
-    required this.onPressState,
     this.isOutlined = false,
     this.onPressed,
   });
 
   @override
+  State<AuthActionButton> createState() => _AuthActionButtonState();
+}
+
+class _AuthActionButtonState extends State<AuthActionButton> {
+  bool _isPressed = false;
+
+  @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTapDown: (_) => onPressState(true),
-      onTapUp: (_) => onPressState(false),
-      onTapCancel: () => onPressState(false),
-      onTap: onPressed,
+      onTapDown: (_) => setState(() => _isPressed = true),
+      onTapUp: (_) => setState(() => _isPressed = false),
+      onTapCancel: () => setState(() => _isPressed = false),
+      onTap: widget.onPressed,
       child: AnimatedScale(
         duration: const Duration(milliseconds: 120),
-        scale: isPressed ? 0.98 : 1,
+        scale: _isPressed ? 0.98 : 1,
         child: _buildContainer(context),
       ),
     );
@@ -49,9 +52,11 @@ class AuthActionButton extends StatelessWidget {
   BoxDecoration _buildDecoration(BuildContext context) {
     final radius = MediaQuery.of(context).size.width * 0.035;
     return BoxDecoration(
-      color: isOutlined ? Colors.transparent : color,
+      color: widget.isOutlined ? Colors.transparent : widget.color,
       borderRadius: BorderRadius.circular(radius),
-      border: isOutlined ? Border.all(color: color, width: 1.5) : null,
+      border: widget.isOutlined
+          ? Border.all(color: widget.color, width: 1.5)
+          : null,
       boxShadow: [
         BoxShadow(
           color: Colors.black.withOpacity(0.12),
@@ -63,13 +68,13 @@ class AuthActionButton extends StatelessWidget {
   }
 
   Widget _buildChild(BuildContext context) {
-    if (isLoading) {
+    if (widget.isLoading) {
       return _loadingIndicator(context);
     }
     return Text(
-      label,
+      widget.label,
       style: TextStyle(
-        color: isOutlined ? color : Colors.white,
+        color: widget.isOutlined ? widget.color : Colors.white,
         fontWeight: FontWeight.w600,
       ),
     );

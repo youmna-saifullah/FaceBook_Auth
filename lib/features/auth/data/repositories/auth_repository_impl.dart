@@ -46,7 +46,7 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<UserEntity> loginWithFacebook() async {
     return _executeAndCache(
-      () => remoteDataSource.loginWithFacebook(),
+      remoteDataSource.loginWithFacebook,
       'Repo: Facebook login failed',
     );
   }

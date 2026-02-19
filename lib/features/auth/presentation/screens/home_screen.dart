@@ -45,11 +45,10 @@ class HomeScreen extends StatelessWidget {
 
   Widget _buildProfileCard(BuildContext context, AuthProvider provider, BoxConstraints constraints) {
     final user = provider.user;
-    final cardWidth = constraints.maxWidth * 0.85;
     final gap = constraints.maxHeight * 0.015;
     return Center(
       child: SizedBox(
-        width: cardWidth,
+        width: constraints.maxWidth * 0.85,
         child: Card(
           elevation: 6,
           child: Padding(
@@ -71,32 +70,24 @@ class HomeScreen extends StatelessWidget {
 
   Widget _buildAvatar(String? photoUrl, BoxConstraints constraints) {
     final radius = constraints.maxWidth * 0.08;
-    final image = _resolveImage(photoUrl);
     return CircleAvatar(
       radius: radius,
       backgroundColor: AppColors.primary.withOpacity(0.1),
-      backgroundImage: image,
-      child: image == null
+      backgroundImage: photoUrl == null || photoUrl.isEmpty
+          ? null
+          : NetworkImage(photoUrl),
+      child: photoUrl == null || photoUrl.isEmpty
           ? Icon(Icons.person, size: radius, color: AppColors.primary)
           : null,
     );
   }
 
-  ImageProvider? _resolveImage(String? photoUrl) {
-    if (photoUrl == null || photoUrl.isEmpty) {
-      return null;
-    }
-    return NetworkImage(photoUrl);
-  }
-
   Widget _buildNameText(String? name, BuildContext context) {
-    final style = Theme.of(context).textTheme.titleLarge;
-    return Text(name ?? 'No Name', style: style);
+    return Text(name ?? 'No Name', style: Theme.of(context).textTheme.titleLarge);
   }
 
   Widget _buildEmailText(String? email, BuildContext context) {
-    final style = Theme.of(context).textTheme.bodyMedium;
-    return Text(email ?? 'No Email', style: style);
+    return Text(email ?? 'No Email', style: Theme.of(context).textTheme.bodyMedium);
   }
 
   Widget _buildLogoutButton(BuildContext context, AuthProvider provider) {

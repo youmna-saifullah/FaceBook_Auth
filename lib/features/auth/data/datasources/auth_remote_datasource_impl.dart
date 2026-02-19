@@ -55,13 +55,14 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       LoggerService.info('Facebook login: Login result status = ${result.status}');
       
       final token = result.accessToken?.tokenString;
-      if (token == null || token.isEmpty) {
-        final status = result.status.toString();
-        throw Exception('Facebook authentication failed (status: $status). Please try again.');
+      if (token?.isEmpty ?? true) {
+        throw Exception(
+          'Facebook authentication failed (status: ${result.status}). Please try again.',
+        );
       }
       
       LoggerService.info('Facebook login: Got access token, signing in with Firebase');
-      final credential = FacebookAuthProvider.credential(token);
+      final credential = FacebookAuthProvider.credential(token!);
       final userCredential = await firebaseAuth.signInWithCredential(credential);
       LoggerService.success('Facebook login: Firebase sign in successful');
       

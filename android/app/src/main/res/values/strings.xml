@@ -1,11 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">facebook_auth</string>
-    
-    <!-- Facebook SDK Configuration -->
-    <!-- Replace with your actual Facebook App ID from https://developers.facebook.com/apps -->
-    <string name="facebook_app_id">YOUR_FACEBOOK_APP_ID</string>
-    
-    <!-- Replace with your Facebook Client Token from https://developers.facebook.com/apps -->
-    <string name="facebook_client_token">YOUR_FACEBOOK_CLIENT_TOKEN</string>
+    <string name="facebook_app_id">2673193476392132</string>
+    <string name="fb_login_protocol_scheme">fb2673193476392132</string>
+    <string name="facebook_client_token">53a1b41a89d551bd4bd4beae58e91ffd</string>
 </resources>

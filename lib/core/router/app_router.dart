@@ -3,9 +3,9 @@ import 'package:go_router/go_router.dart';
 import '../../app/injection_container.dart';
 import '../../core/services/logger/logger_service.dart';
 import '../../features/auth/presentation/providers/auth_provider.dart';
-import '../../features/auth/presentation/screens/home_screen.dart';
 import '../../features/auth/presentation/screens/sign_in_screen.dart';
 import '../../features/auth/presentation/screens/sign_up_screen.dart';
+import '../../features/home/presentation/screens/home_screen.dart';
 import 'router_name.dart';
 import 'router_transitions.dart';
 

@@ -1,13 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+
 import '../../../../core/enums/load_status.dart';
 import '../../../../core/router/router_name.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../providers/auth_provider.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
+import '../providers/home_provider.dart';
 
-class HomeScreen extends StatelessWidget {
+/// Home screen displaying user profile information and logout functionality.
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Load user profile when screen initializes
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<HomeProvider>().loadUserProfile();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -16,8 +33,9 @@ class HomeScreen extends StatelessWidget {
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
-            final provider = context.watch<AuthProvider>();
-            return _buildContent(context, constraints, provider);
+            final homeProvider = context.watch<HomeProvider>();
+            final authProvider = context.watch<AuthProvider>();
+            return _buildContent(context, constraints, homeProvider, authProvider);
           },
         ),
       ),
@@ -27,24 +45,34 @@ class HomeScreen extends StatelessWidget {
   Widget _buildContent(
     BuildContext context,
     BoxConstraints constraints,
-    AuthProvider provider,
+    HomeProvider homeProvider,
+    AuthProvider authProvider,
   ) {
     final padding = constraints.maxWidth * 0.08;
     final gap = constraints.maxHeight * 0.02;
+
+    if (homeProvider.status == LoadStatus.loading && homeProvider.userProfile == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: padding, vertical: gap * 2),
       child: Column(
         children: [
-          _buildProfileCard(context, provider, constraints),
+          _buildProfileCard(context, homeProvider, constraints),
           SizedBox(height: gap * 2),
-          _buildLogoutButton(context, provider),
+          _buildLogoutButton(context, authProvider),
         ],
       ),
     );
   }
 
-  Widget _buildProfileCard(BuildContext context, AuthProvider provider, BoxConstraints constraints) {
-    final user = provider.user;
+  Widget _buildProfileCard(
+    BuildContext context,
+    HomeProvider provider,
+    BoxConstraints constraints,
+  ) {
+    final user = provider.userProfile;
     final gap = constraints.maxHeight * 0.015;
     return Center(
       child: SizedBox(
@@ -72,10 +100,9 @@ class HomeScreen extends StatelessWidget {
     final radius = constraints.maxWidth * 0.08;
     return CircleAvatar(
       radius: radius,
-      backgroundColor: AppColors.primary.withOpacity(0.1),
-      backgroundImage: photoUrl == null || photoUrl.isEmpty
-          ? null
-          : NetworkImage(photoUrl),
+      backgroundColor: AppColors.primary.withValues(alpha: 0.1),
+      backgroundImage:
+          photoUrl == null || photoUrl.isEmpty ? null : NetworkImage(photoUrl),
       child: photoUrl == null || photoUrl.isEmpty
           ? Icon(Icons.person, size: radius, color: AppColors.primary)
           : null,
@@ -83,11 +110,17 @@ class HomeScreen extends StatelessWidget {
   }
 
   Widget _buildNameText(String? name, BuildContext context) {
-    return Text(name ?? 'No Name', style: Theme.of(context).textTheme.titleLarge);
+    return Text(
+      name ?? 'No Name',
+      style: Theme.of(context).textTheme.titleLarge,
+    );
   }
 
   Widget _buildEmailText(String? email, BuildContext context) {
-    return Text(email ?? 'No Email', style: Theme.of(context).textTheme.bodyMedium);
+    return Text(
+      email ?? 'No Email',
+      style: Theme.of(context).textTheme.bodyMedium,
+    );
   }
 
   Widget _buildLogoutButton(BuildContext context, AuthProvider provider) {

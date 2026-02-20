@@ -7,6 +7,7 @@ import '../core/router/app_router.dart';
 import '../core/services/notifications/notification_service.dart';
 import '../core/theme/app_theme.dart';
 import '../features/auth/presentation/providers/auth_provider.dart';
+import '../features/home/presentation/providers/home_provider.dart';
 
 class AppName extends StatelessWidget {
   const AppName({super.key});
@@ -18,6 +19,10 @@ class AppName extends StatelessWidget {
         // Auth Provider from GetIt
         ChangeNotifierProvider<AuthProvider>(
           create: (_) => getIt<AuthProvider>(),
+        ),
+        // Home Provider from GetIt
+        ChangeNotifierProvider<HomeProvider>(
+          create: (_) => getIt<HomeProvider>(),
         ),
       ],
       child: MaterialApp.router(

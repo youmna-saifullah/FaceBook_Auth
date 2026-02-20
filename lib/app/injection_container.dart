@@ -7,6 +7,7 @@ import 'package:get_it/get_it.dart';
 
 import '../core/services/dio/dio_client.dart';
 import '../core/services/logger/logger_service.dart';
+import '../features/home/home_di.dart';
 import '../core/services/notifications/firebase_messaging_service.dart';
 import '../core/services/notifications/notification_service.dart';
 import '../features/auth/data/datasources/auth_local_datasource.dart';
@@ -31,7 +32,12 @@ void setupInjectionContainer() {
   _setupRepositories();
   _setupUseCases();
   _setupProviders();
+  _setupFeatures();
   LoggerService.success('Dependency injection setup completed');
+}
+
+void _setupFeatures() {
+  setupHomeDI(getIt);
 }
 
 void _setupCoreServices() {
